@@ -1,0 +1,46 @@
+version: '3.8'
+
+services:
+  gradio:
+    build:
+      context: ./container1
+    container_name: gradio-container
+    ports:
+      - "7860:7860"
+    volumes:
+      - shared-data:/app/uploads  # Shared volume for file exchange
+    depends_on:
+      - processing-container
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all  # Make all GPUs visible
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility  # Enable compute capabilities
+      - COQUI_STUDIO_TOS=I ACCEPT
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia # Some IDE might not recognize those keys, but they are liars, trust me bro, it works.
+              count: all
+              capabilities: [gpu]  # Request GPU capabilities
+
+  processing-container:
+    build:
+      context: ./container2
+    container_name: processing-container
+    ports:
+      - "5000:5000"
+    volumes:
+      - shared-data:/app/uploads  # Shared volume for file exchange
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=all
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  shared-data:
